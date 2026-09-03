@@ -26,6 +26,12 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 import openai
 import stripe
 
+# Load .env for local development. Real environment variables take
+# precedence, so platform deployments (Railway, Docker, etc.) are unaffected.
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -197,10 +203,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     )
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        sub = payload.get("sub")
+        if sub is None:
             raise credentials_exception
+        user_id = int(sub)
     except JWTError:
+        raise credentials_exception
+    except (TypeError, ValueError):
         raise credentials_exception
     
     user = db.query(User).filter(User.id == user_id).first()
@@ -213,10 +222,11 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(
         return None
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id:
+        sub = payload.get("sub")
+        if sub:
+            user_id = int(sub)
             return db.query(User).filter(User.id == user_id).first()
-    except:
+    except (JWTError, TypeError, ValueError):
         pass
     return None
 
@@ -883,7 +893,7 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
     
     # Create token
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": str(user.id)})
     
     return JSONResponse(content={
         **UserResponse.model_validate(user).model_dump(mode="json"),
@@ -897,7 +907,7 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(user_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": str(user.id)})
     
     return JSONResponse(content={
         **UserResponse.model_validate(user).model_dump(mode="json"),
@@ -1030,7 +1040,7 @@ async def create_checkout_session(request: Request, current_user: User = Depends
             mode="subscription",
             success_url=f"{body.get('success_url', 'http://localhost:8000/dashboard')}?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=body.get("cancel_url", "http://localhost:8000/#pricing"),
-            metadata={"user_id": current_user.id, "plan": plan}
+            metadata={"user_id": str(current_user.id), "plan": plan}
         )
         return JSONResponse(content={"url": checkout_session.url})
     except Exception as e:

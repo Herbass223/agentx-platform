@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — AgentX</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #06b6d4;
+            --bg: #0b0d17;
+            --bg-soft: #11141f;
+            --card: #161a29;
+            --card-border: #232842;
+            --text: #e8eaf6;
+            --text-muted: #9aa1c0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1150px; margin: 0 auto; padding: 0 24px; }
+
+        /* ===== NAVBAR ===== */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(11, 13, 23, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+        }
+        .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+        .logo {
+            font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
+        }
+        .logo-badge {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 22px; border-radius: 12px; border: none; cursor: pointer;
+            font-size: 0.92rem; font-weight: 600; text-decoration: none;
+            transition: transform .15s, box-shadow .15s, background .2s;
+            font-family: inherit;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35); }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
+        .btn-ghost:hover { border-color: var(--primary); }
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+
+        /* ===== LOADING / AUTH GUARD ===== */
+        #guardScreen {
+            position: fixed; inset: 0; display: flex; flex-direction: column; gap: 18px;
+            align-items: center; justify-content: center; z-index: 50; background: var(--bg);
+        }
+        .spinner {
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 4px solid var(--card-border); border-top-color: var(--primary);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #guardScreen p { color: var(--text-muted); }
+
+        /* ===== LAYOUT ===== */
+        main { padding: 40px 0 80px; }
+        .dash-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 18px; margin-bottom: 30px; }
+        .dash-head h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; letter-spacing: -0.8px; }
+        .dash-head .sub { color: var(--text-muted); font-size: 0.95rem; }
+        .plan-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 16px; border-radius: 999px; font-size: 0.82rem; font-weight: 700;
+            background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.45);
+            color: #b6bcff; text-transform: capitalize; margin-top: 8px;
+        }
+
+        /* ===== STATS ===== */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 26px; }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 24px; display: flex; align-items: center; gap: 18px;
+        }
+        .stat-icon {
+            width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+        }
+        .stat-card .stat-value { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; }
+        .stat-card .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; }
+        .icon-primary { background: rgba(99, 102, 241, 0.14); }
+        .icon-accent { background: rgba(6, 182, 212, 0.14); }
+        .icon-success { background: rgba(16, 185, 129, 0.14); }
+        .icon-warning { background: rgba(245, 158, 11, 0.14); }
+
+        /* ===== USAGE BAR ===== */
+        .usage-card {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 26px; margin-bottom: 26px;
+        }
+        .usage-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .usage-head h3 { font-size: 1.05rem; }
+        .usage-head .usage-num { color: var(--text-muted); font-size: 0.9rem; }
+        .progress-track { height: 14px; background: var(--bg-soft); border-radius: 999px; overflow: hidden; border: 1px solid var(--card-border); }
+        .progress-fill {
+            height: 100%; border-radius: 999px; transition: width .6s ease;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+        .progress-fill.warn { background: linear-gradient(90deg, var(--warning), #f97316); }
+        .progress-fill.full { background: linear-gradient(90deg, var(--danger), #dc2626); }
+        .usage-foot { display: flex; justify-content: space-between; margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; flex-wrap: wrap; gap: 8px; }
+
+        /* ===== SECTIONS ===== */
+        .section-title {
+            display: flex; align-items: center; justify-content: space-between;
+            margin: 34px 0 18px; flex-wrap: wrap; gap: 10px;
+        }
+        .section-title h2 { font-size: 1.3rem; letter-spacing: -0.4px; }
+        .refresh-note { font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        /* ===== TASK LIST ===== */
+        .task-list { display: flex; flex-direction: column; gap: 14px; }
+        .task-card {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 20px 22px; transition: border-color .2s;
+        }
+        .task-card:hover { border-color: rgba(99, 102, 241, 0.6); }
+        .task-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .task-skill {
+            width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+            background: rgba(99, 102, 241, 0.13); border: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+        }
+        .task-title-wrap { flex: 1; min-width: 200px; }
+        .task-title-wrap h3 { font-size: 1.02rem; }
+        .task-title-wrap .task-meta { font-size: 0.78rem; color: var(--text-muted); }
+        .status-pill {
+            padding: 5px 13px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .status-pill.completed { background: rgba(16, 185, 129, 0.14); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.4); }
+        .status-pill.in_progress { background: rgba(245, 158, 11, 0.14); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+        .status-pill.pending { background: rgba(154, 161, 192, 0.14); color: var(--text-muted); border: 1px solid var(--card-border); }
+        .task-toggle {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            font-size: 1rem; padding: 6px 10px; border-radius: 8px; font-family: inherit;
+        }
+        .task-toggle:hover { color: var(--text); background: var(--bg-soft); }
+        .task-result {
+            display: none; margin-top: 16px; padding: 16px 18px; border-radius: 12px;
+            background: var(--bg-soft); border: 1px solid var(--card-border);
+            white-space: pre-wrap; font-size: 0.88rem; max-height: 340px; overflow-y: auto; color: var(--text);
+        }
+        .task-result.open { display: block; }
+        .task-desc { margin-top: 10px; color: var(--text-muted); font-size: 0.86rem; }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--text-muted);
+            background: var(--card); border: 1px dashed var(--card-border); border-radius: var(--radius);
+        }
+        .empty-state .empty-icon { font-size: 2.6rem; margin-bottom: 12px; }
+
+        /* ===== UPGRADE ===== */
+        .upgrade-strip {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.35); border-radius: var(--radius);
+            padding: 26px; display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 18px; margin-bottom: 26px;
+        }
+        .upgrade-strip h3 { font-size: 1.1rem; margin-bottom: 4px; }
+        .upgrade-strip p { color: var(--text-muted); font-size: 0.9rem; }
+        .upgrade-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* ===== ACCOUNT ===== */
+        .account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+        .account-card {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 22px;
+        }
+        .account-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 10px; }
+        .account-card .value { font-size: 1.08rem; font-weight: 600; word-break: break-all; }
+
+        /* ===== TOASTS ===== */
+        #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: var(--card); border: 1px solid var(--card-border); border-left: 4px solid var(--success);
+            border-radius: 12px; padding: 14px 20px; min-width: 280px; max-width: 380px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); animation: toastIn .3s ease; font-size: 0.9rem;
+        }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.info { border-left-color: var(--accent); }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+
+        @media (max-width: 640px) {
+            .dash-head { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="guardScreen">
+    <div class="spinner"></div>
+    <p id="guardMsg">Loading your dashboard...</p>
+</div>
+
+<nav>
+    <div class="container nav-inner">
+        <a href="/" class="logo"><span class="logo-badge">⚡</span> AgentX</a>
+        <div class="nav-actions">
+            <a href="/#submit" class="btn btn-primary btn-sm">+ New Task</a>
+            <a href="/" class="btn btn-ghost btn-sm">← Back to Site</a>
+            <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<main class="container" id="dashMain" style="display: none;">
+    <!-- Header -->
+    <div class="dash-head">
+        <div>
+            <h1 id="welcomeTitle">Welcome back 👋</h1>
+            <p class="sub" id="memberSince"></p>
+            <div class="plan-badge" id="planBadge">🆓 Free Plan</div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-primary">📋</div>
+            <div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Tasks</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-success">✅</div>
+            <div><div class="stat-value" id="statCompleted">0</div><div class="stat-label">Completed</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-accent">📊</div>
+            <div><div class="stat-value" id="statRemaining">0</div><div class="stat-label">Tasks Remaining</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-warning">📈</div>
+            <div><div class="stat-value" id="statTopSkill">—</div><div class="stat-label">Top Skill</div></div>
+        </div>
+    </div>
+
+    <!-- Usage -->
+    <div class="usage-card">
+        <div class="usage-head">
+            <h3>Plan usage this month</h3>
+            <span class="usage-num" id="usageNum">0 / 5 tasks used</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="usageBar" style="width: 0%;"></div>
+        </div>
+        <div class="usage-foot">
+            <span id="usageFootLeft">Free plan — 5 tasks per month</span>
+            <span id="usageFootRight">Resets on plan change</span>
+        </div>
+    </div>
+
+    <!-- Upgrade strip -->
+    <div class="upgrade-strip" id="upgradeStrip">
+        <div>
+            <h3>⚡ Need more firepower?</h3>
+            <p>Upgrade for more tasks, priority support, and advanced skills.</p>
+        </div>
+        <div class="upgrade-btns">
+            <button class="btn btn-primary btn-sm" onclick="upgrade('starter')">Starter — $99/mo</button>
+            <button class="btn btn-accent btn-sm" onclick="upgrade('professional')">Professional — $299/mo</button>
+            <button class="btn btn-ghost btn-sm" onclick="upgrade('enterprise')">Enterprise</button>
+        </div>
+    </div>
+
+    <!-- Task history -->
+    <div class="section-title">
+        <h2>🗂️ Task History</h2>
+        <span class="refresh-note"><span class="live-dot"></span> Auto-refreshes every 30s</span>
+    </div>
+    <div class="task-list" id="taskList">
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>No tasks yet. Submit your first task from the main site!</p>
+            <a href="/#submit" class="btn btn-primary" style="margin-top: 18px;">Submit a Task</a>
+        </div>
+    </div>
+
+    <!-- Account -->
+    <div class="section-title"><h2>👤 Account</h2></div>
+    <div class="account-grid">
+        <div class="account-card"><h3>Name</h3><div class="value" id="acctName">—</div></div>
+        <div class="account-card"><h3>Email</h3><div class="value" id="acctEmail">—</div></div>
+        <div class="account-card"><h3>Plan</h3><div class="value" id="acctPlan" style="text-transform: capitalize;">—</div></div>
+        <div class="account-card"><h3>Member Since</h3><div class="value" id="acctSince">—</div></div>
+    </div>
+</main>
+
+<div id="toast-container"></div>
+
+<script>
+// ============================================================
+// STATE & HELPERS
+// ============================================================
+const API = '';
+let currentUser = null;
+let tasks = [];
+
+const SKILL_META = {
+    coding: { icon: '💻', label: 'Coding' },
+    writing: { icon: '✍️', label: 'Writing' },
+    research: { icon: '🔍', label: 'Research' },
+    data: { icon: '📊', label: 'Data' },
+    customer: { icon: '🎧', label: 'Support' },
+    admin: { icon: '📁', label: 'Admin' }
+};
+
+function getToken() { return localStorage.getItem('agentx_token'); }
+function authHeaders() { return { 'Authorization': 'Bearer ' + getToken() }; }
+
+function toast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 4200);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+}
+
+function logout() {
+    localStorage.removeItem('agentx_token');
+    localStorage.removeItem('agentx_user');
+    window.location.href = '/';
+}
+
+function guardFail(msg) {
+    document.getElementById('guardMsg').textContent = msg;
+    setTimeout(() => { window.location.href = '/'; }, 1800);
+}
+
+function formatDate(iso) {
+    try { return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
+    catch (e) { return iso || ''; }
+}
+function formatDateTime(iso) {
+    try { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return iso || ''; }
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadUser() {
+    const res = await fetch(API + '/api/auth/me', { headers: authHeaders() });
+    if (res.status === 401) { guardFail('Session expired. Redirecting to login...'); throw new Error('unauthorized'); }
+    if (!res.ok) throw new Error('Failed to load user');
+    currentUser = await res.json();
+    localStorage.setItem('agentx_user', JSON.stringify(currentUser));
+}
+
+async function loadTasks() {
+    const res = await fetch(API + '/api/tasks', { headers: authHeaders() });
+    if (!res.ok) throw new Error('Failed to load tasks');
+    tasks = await res.json();
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function renderUser() {
+    document.getElementById('welcomeTitle').textContent = `Welcome back, ${currentUser.name.split(' ')[0]} 👋`;
+    document.getElementById('memberSince').textContent = `Member since ${formatDate(currentUser.created_at)}`;
+    const planEmoji = { free: '🆓', starter: '🚀', professional: '⚡', enterprise: '🏢' }[currentUser.plan] || '📦';
+    document.getElementById('planBadge').textContent = `${planEmoji} ${currentUser.plan} Plan`;
+    document.getElementById('acctName').textContent = currentUser.name;
+    document.getElementById('acctEmail').textContent = currentUser.email;
+    document.getElementById('acctPlan').textContent = currentUser.plan;
+    document.getElementById('acctSince').textContent = formatDate(currentUser.created_at);
+}
+
+function renderUsage() {
+    const used = currentUser.tasks_used || 0;
+    const limit = currentUser.tasks_limit || 5;
+    const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+    const unlimited = limit >= 999999;
+
+    document.getElementById('usageNum').textContent = unlimited ? `${used} tasks used (unlimited)` : `${used} / ${limit} tasks used`;
+    const bar = document.getElementById('usageBar');
+    bar.style.width = (unlimited ? Math.min(100, used % 100) : pct) + '%';
+    bar.className = 'progress-fill' + (pct >= 100 ? ' full' : pct >= 75 ? ' warn' : '');
+    document.getElementById('usageFootLeft').textContent = `${currentUser.plan} plan — ${unlimited ? 'unlimited tasks' : limit + ' tasks per month'}`;
+
+    // Hide upgrade strip for enterprise
+    if (currentUser.plan === 'enterprise') document.getElementById('upgradeStrip').style.display = 'none';
+}
+
+function renderStats() {
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    const remaining = currentUser.tasks_limit >= 999999
+        ? '∞'
+        : Math.max(0, currentUser.tasks_limit - currentUser.tasks_used);
+
+    document.getElementById('statTotal').textContent = tasks.length;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statRemaining').textContent = remaining;
+
+    // Top skill
+    const counts = {};
+    tasks.forEach(t => { counts[t.skill] = (counts[t.skill] || 0) + 1; });
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('statTopSkill').textContent = top ? (SKILL_META[top[0]]?.label || top[0]) : '—';
+}
+
+function renderTasks() {
+    const list = document.getElementById('taskList');
+
+    if (!tasks.length) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <p>No tasks yet. Submit your first task from the main site!</p>
+                <a href="/#submit" class="btn btn-primary" style="margin-top: 18px;">Submit a Task</a>
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = tasks.map(t => {
+        const meta = SKILL_META[t.skill] || { icon: '⚙️', label: t.skill };
+        return `
+        <div class="task-card">
+            <div class="task-top">
+                <div class="task-skill">${meta.icon}</div>
+                <div class="task-title-wrap">
+                    <h3>${escapeHtml(t.title)}</h3>
+                    <div class="task-meta">${escapeHtml(meta.label)} · ${escapeHtml(formatDateTime(t.created_at))}</div>
+                </div>
+                <span class="status-pill ${t.status}">${t.status.replace('_', ' ')}</span>
+                ${t.result ? `<button class="task-toggle" onclick="toggleResult(this)">▶ Result</button>` : ''}
+            </div>
+            <div class="task-desc">${escapeHtml(t.description)}</div>
+            <div class="task-result">${escapeHtml(t.result || '')}</div>
+        </div>`;
+    }).join('');
+}
+
+function toggleResult(btn) {
+    const resultEl = btn.closest('.task-card').querySelector('.task-result');
+    const open = resultEl.classList.toggle('open');
+    btn.textContent = open ? '▼ Hide Result' : '▶ Result';
+}
+
+// ============================================================
+// UPGRADE
+// ============================================================
+async function upgrade(plan) {
+    try {
+        const res = await fetch(API + '/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({
+                plan,
+                success_url: window.location.origin + '/dashboard',
+                cancel_url: window.location.origin + '/dashboard'
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Checkout failed');
+        if (data.url) window.location.href = data.url;
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// REFRESH
+// ============================================================
+async function refresh() {
+    try {
+        await loadUser();
+        renderUser();
+        renderUsage();
+        await loadTasks();
+        renderStats();
+        renderTasks();
+    } catch (err) {
+        if (err.message !== 'unauthorized') toast('Could not refresh data: ' + err.message, 'error');
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+    if (!getToken()) { guardFail('Please log in to view your dashboard. Redirecting...'); return; }
+
+    try {
+        await refresh();
+        document.getElementById('guardScreen').style.display = 'none';
+        document.getElementById('dashMain').style.display = 'block';
+        // Auto-refresh every 30 seconds
+        setInterval(refresh, 30000);
+    } catch (err) {
+        if (err.message !== 'unauthorized') guardFail('Something went wrong. Redirecting...');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -3,10 +3,901 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>AgentX — Your AI Workforce, On Demand</title>
+    <meta name="description" content="Hire AgentX, a transparent AI agent for coding, writing, research, data processing, customer support, and admin tasks.">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #06b6d4;
+            --bg: #0b0d17;
+            --bg-soft: #11141f;
+            --card: #161a29;
+            --card-border: #232842;
+            --text: #e8eaf6;
+            --text-muted: #9aa1c0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1150px; margin: 0 auto; padding: 0 24px; }
+
+        /* ===== NAVBAR ===== */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(11, 13, 23, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+        }
+        .nav-inner {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 68px;
+        }
+        .logo {
+            font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
+        }
+        .logo-badge {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+        .nav-links { display: flex; align-items: center; gap: 28px; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: color .2s; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-auth { display: flex; align-items: center; gap: 12px; }
+        .nav-user { display: none; align-items: center; gap: 12px; }
+        .nav-user .avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px; border-radius: 12px; border: none; cursor: pointer;
+            font-size: 0.98rem; font-weight: 600; text-decoration: none;
+            transition: transform .15s, box-shadow .15s, background .2s;
+            font-family: inherit;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35); }
+        .btn-primary:hover { box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5); transform: translateY(-2px); }
+        .btn-accent { background: linear-gradient(135deg, var(--accent), #0891b2); color: #fff; box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3); }
+        .btn-accent:hover { transform: translateY(-2px); }
+        .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
+        .btn-ghost:hover { border-color: var(--primary); color: #fff; }
+        .btn-sm { padding: 9px 18px; font-size: 0.88rem; border-radius: 10px; }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+
+        /* ===== HERO ===== */
+        .hero {
+            padding: 150px 0 90px; text-align: center; position: relative;
+            background:
+                radial-gradient(600px 300px at 20% 10%, rgba(99, 102, 241, 0.18), transparent),
+                radial-gradient(600px 300px at 80% 20%, rgba(6, 182, 212, 0.14), transparent);
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 7px 16px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+            background: rgba(99, 102, 241, 0.14); border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #b6bcff; margin-bottom: 26px;
+        }
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+        .hero h1 {
+            font-size: clamp(2.4rem, 5.5vw, 4rem); font-weight: 800; letter-spacing: -1.5px;
+            line-height: 1.12; max-width: 850px; margin: 0 auto 22px;
+        }
+        .gradient-text { background: linear-gradient(90deg, #a5b4fc, #67e8f9); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-muted); font-size: 1.15rem; max-width: 640px; margin: 0 auto 36px; }
+        .hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+        .hero-stats { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .stat-chip {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+            padding: 16px 26px; min-width: 150px;
+        }
+        .stat-chip .num { font-size: 1.45rem; font-weight: 800; color: #a5b4fc; }
+        .stat-chip .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+
+        /* ===== SECTIONS ===== */
+        section { padding: 80px 0; }
+        .section-head { text-align: center; margin-bottom: 52px; }
+        .section-head .eyebrow { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.78rem; margin-bottom: 12px; }
+        .section-head h2 { font-size: clamp(1.7rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 14px; }
+        .section-head p { color: var(--text-muted); max-width: 620px; margin: 0 auto; }
+
+        /* ===== SKILLS ===== */
+        .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 22px; }
+        .skill-card {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 28px; transition: transform .2s, border-color .2s;
+        }
+        .skill-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .skill-icon { font-size: 2.2rem; margin-bottom: 14px; }
+        .skill-card h3 { font-size: 1.15rem; margin-bottom: 8px; }
+        .skill-card > p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 16px; }
+        .capabilities { display: flex; flex-wrap: wrap; gap: 7px; }
+        .capability {
+            font-size: 0.75rem; font-weight: 600; padding: 4px 11px; border-radius: 999px;
+            background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #b6bcff;
+        }
+
+        /* ===== CHAT ===== */
+        .chat-wrap {
+            display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 860px; margin: 0 auto;
+        }
+        .chat-window {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+        }
+        .chat-header {
+            display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+            border-bottom: 1px solid var(--card-border); background: var(--bg-soft);
+        }
+        .chat-header .bot-avatar {
+            width: 38px; height: 38px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+        }
+        .chat-header .bot-info strong { display: block; font-size: 0.98rem; }
+        .chat-header .bot-info span { font-size: 0.78rem; color: var(--success); display: flex; align-items: center; gap: 6px; }
+        .chat-messages {
+            height: 400px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px;
+        }
+        .chat-messages::-webkit-scrollbar { width: 8px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+        .msg { max-width: 78%; padding: 12px 16px; border-radius: 16px; font-size: 0.93rem; white-space: pre-wrap; word-break: break-word; }
+        .msg.bot { align-self: flex-start; background: var(--bg-soft); border: 1px solid var(--card-border); border-bottom-left-radius: 4px; }
+        .msg.user { align-self: flex-end; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-bottom-right-radius: 4px; }
+        .msg.typing { color: var(--text-muted); font-style: italic; }
+        .typing-dots::after { content: '...'; animation: dots 1.2s steps(4) infinite; }
+        @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+        .quick-prompts { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--card-border); background: var(--bg-soft); }
+        .quick-prompt {
+            font-size: 0.78rem; padding: 6px 13px; border-radius: 999px; cursor: pointer;
+            background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #b6bcff;
+            font-family: inherit; transition: background .2s;
+        }
+        .quick-prompt:hover { background: rgba(99, 102, 241, 0.28); }
+        .chat-input-row { display: flex; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--card-border); background: var(--bg-soft); }
+        .chat-input-row input {
+            flex: 1; background: var(--bg); border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 12px 16px; color: var(--text); font-size: 0.95rem; font-family: inherit; outline: none;
+        }
+        .chat-input-row input:focus { border-color: var(--primary); }
+        .voice-btn {
+            width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--card-border);
+            background: var(--bg); color: var(--text-muted); cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; transition: all .2s;
+        }
+        .voice-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .voice-btn.listening { border-color: var(--danger); color: var(--danger); animation: pulse 1.2s infinite; }
+        .send-btn { width: 46px; height: 46px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; cursor: pointer; font-size: 1.05rem; }
+
+        /* ===== TASK FORM ===== */
+        .task-wrap { max-width: 760px; margin: 0 auto; }
+        .task-form {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 32px;
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+        .form-group input, .form-group select, .form-group textarea {
+            background: var(--bg-soft); border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 12px 14px; color: var(--text); font-size: 0.95rem; font-family: inherit; outline: none;
+            transition: border-color .2s; width: 100%;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-group select option { background: var(--bg-soft); }
+        .form-hint { font-size: 0.78rem; color: var(--text-muted); }
+        .task-result {
+            display: none; margin-top: 24px; border-radius: 14px; overflow: hidden;
+            border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.06);
+        }
+        .task-result.show { display: block; }
+        .task-result-header {
+            display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+            background: rgba(16, 185, 129, 0.12); font-weight: 700; color: var(--success); font-size: 0.95rem;
+        }
+        .task-result-body { padding: 18px; white-space: pre-wrap; font-size: 0.9rem; max-height: 380px; overflow-y: auto; color: var(--text); }
+
+        /* ===== PRICING ===== */
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
+        .price-card {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 30px 26px; display: flex; flex-direction: column; position: relative;
+            transition: transform .2s, border-color .2s;
+        }
+        .price-card:hover { transform: translateY(-5px); }
+        .price-card.popular { border-color: var(--primary); box-shadow: 0 0 50px rgba(99, 102, 241, 0.18); }
+        .popular-tag {
+            position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff;
+            font-size: 0.72rem; font-weight: 700; padding: 5px 14px; border-radius: 999px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .price-tier { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; }
+        .price-amount { font-size: 2.3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+        .price-tasks { color: var(--accent); font-weight: 600; font-size: 0.9rem; margin-bottom: 22px; }
+        .price-features { list-style: none; flex: 1; margin-bottom: 26px; }
+        .price-features li { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-muted); padding: 6px 0; }
+        .price-features li::before { content: '✓'; color: var(--success); font-weight: 800; }
+
+        /* ===== FOOTER ===== */
+        footer { border-top: 1px solid var(--card-border); padding: 40px 0; margin-top: 40px; }
+        .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+        .footer-inner p { color: var(--text-muted); font-size: 0.85rem; }
+        .footer-links { display: flex; gap: 22px; }
+        .footer-links a { color: var(--text-muted); font-size: 0.85rem; text-decoration: none; }
+        .footer-links a:hover { color: var(--text); }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(5, 7, 15, 0.75); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card); border: 1px solid var(--card-border); border-radius: 20px;
+            width: 100%; max-width: 420px; padding: 34px; position: relative;
+            animation: modalIn .25s ease;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: none; } }
+        .modal-close {
+            position: absolute; top: 16px; right: 16px; background: none; border: none;
+            color: var(--text-muted); font-size: 1.4rem; cursor: pointer; line-height: 1;
+        }
+        .modal h3 { font-size: 1.4rem; margin-bottom: 6px; }
+        .modal .modal-sub { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+        .auth-tabs { display: flex; background: var(--bg-soft); border-radius: 12px; padding: 5px; margin-bottom: 22px; }
+        .auth-tab {
+            flex: 1; padding: 10px; border: none; background: none; color: var(--text-muted);
+            font-weight: 600; font-family: inherit; border-radius: 9px; cursor: pointer; font-size: 0.92rem;
+        }
+        .auth-tab.active { background: var(--primary); color: #fff; }
+        .modal .form-group { margin-bottom: 16px; }
+        .modal-error {
+            display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px;
+        }
+        .modal-error.show { display: block; }
+
+        /* ===== TOASTS ===== */
+        #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: var(--card); border: 1px solid var(--card-border); border-left: 4px solid var(--success);
+            border-radius: 12px; padding: 14px 20px; min-width: 280px; max-width: 380px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); animation: toastIn .3s ease; font-size: 0.9rem;
+        }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.info { border-left-color: var(--accent); }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+
+        @media (max-width: 720px) {
+            .nav-links { display: none; }
+            .form-grid { grid-template-columns: 1fr; }
+            .hero { padding: 120px 0 60px; }
+            .msg { max-width: 90%; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome</h1>
-    <p>The application is running successfully.</p>
+
+<!-- ===== NAVBAR ===== -->
+<nav>
+    <div class="container nav-inner">
+        <a href="/" class="logo">
+            <span class="logo-badge">⚡</span> AgentX
+        </a>
+        <div class="nav-links">
+            <a href="#skills">Skills</a>
+            <a href="#interview">Interview Me</a>
+            <a href="#submit">Submit Task</a>
+            <a href="#pricing">Pricing</a>
+        </div>
+        <div class="nav-auth">
+            <div class="nav-user" id="navUser">
+                <a href="/dashboard" class="btn btn-ghost btn-sm" id="dashboardLink">Dashboard</a>
+                <div class="avatar" id="navAvatar">A</div>
+                <button class="btn btn-ghost btn-sm" id="logoutBtn">Logout</button>
+            </div>
+            <div class="nav-guest" id="navGuest">
+                <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Login</button>
+                <button class="btn btn-primary btn-sm" onclick="openAuth('signup')">Sign Up</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+    <div class="container">
+        <div class="hero-badge"><span class="pulse-dot"></span> AgentX is online and ready to work</div>
+        <h1>Hire an AI agent that <span class="gradient-text">actually delivers</span></h1>
+        <p id="heroTagline">Your AI Workforce, On Demand. Interview AgentX before you hire, submit tasks across six professional skill areas, and get results in seconds — fully transparent about being AI.</p>
+        <div class="hero-ctas">
+            <a href="#interview" class="btn btn-primary">💬 Interview Me</a>
+            <a href="#submit" class="btn btn-accent">🚀 Submit a Task</a>
+        </div>
+        <div class="hero-stats" id="heroStats">
+            <div class="stat-chip"><div class="num">1,247</div><div class="label">Tasks Completed</div></div>
+            <div class="stat-chip"><div class="num">4.9/5</div><div class="label">Client Satisfaction</div></div>
+            <div class="stat-chip"><div class="num">2.3s</div><div class="label">Avg Response</div></div>
+            <div class="stat-chip"><div class="num">99.97%</div><div class="label">Uptime</div></div>
+        </div>
+    </div>
+</header>
+
+<!-- ===== SKILLS ===== -->
+<section id="skills">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">Capabilities</div>
+            <h2>Six professional skill areas</h2>
+            <p>Every task is handled by a purpose-built engine, with transparent AI-generated results you can review instantly.</p>
+        </div>
+        <div class="skills-grid" id="skillsGrid">
+            <!-- Populated by JS from /api/profile -->
+        </div>
+    </div>
+</section>
+
+<!-- ===== INTERVIEW / CHAT ===== -->
+<section id="interview" style="background: var(--bg-soft);">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">Interview</div>
+            <h2>Interview AgentX before you hire</h2>
+            <p>Ask anything — about skills, process, pricing, or give a mini task right in the chat. Voice input supported.</p>
+        </div>
+        <div class="chat-wrap">
+            <div class="chat-window">
+                <div class="chat-header">
+                    <div class="bot-avatar">🤖</div>
+                    <div class="bot-info">
+                        <strong>AgentX</strong>
+                        <span><span class="pulse-dot"></span> Online — responds instantly</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="quick-prompts" id="quickPrompts">
+                    <button class="quick-prompt" onclick="sendQuick(this)">What can you do for me?</button>
+                    <button class="quick-prompt" onclick="sendQuick(this)">How does pricing work?</button>
+                    <button class="quick-prompt" onclick="sendQuick(this)">Write a short blog intro about remote work</button>
+                    <button class="quick-prompt" onclick="sendQuick(this)">What are your working hours?</button>
+                </div>
+                <div class="chat-input-row">
+                    <button class="voice-btn" id="voiceBtn" title="Voice input" onclick="toggleVoice()">🎙️</button>
+                    <input type="text" id="chatInput" placeholder="Ask me anything..." autocomplete="off"
+                           onkeydown="if(event.key === 'Enter') sendMessage()">
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== SUBMIT TASK ===== -->
+<section id="submit">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">Hire</div>
+            <h2>Submit a task, get results in seconds</h2>
+            <p>Describe what you need. AgentX executes it immediately and shows you the result. <span id="taskQuota"></span></p>
+        </div>
+        <div class="task-wrap">
+            <div class="task-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="taskTitle">Task title</label>
+                        <input type="text" id="taskTitle" placeholder="e.g. Draft a product announcement email">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskSkill">Skill category</label>
+                        <select id="taskSkill">
+                            <option value="coding">💻 Coding</option>
+                            <option value="writing" selected>✍️ Writing</option>
+                            <option value="research">🔍 Research</option>
+                            <option value="data">📊 Data Processing</option>
+                            <option value="customer">🎧 Customer Support</option>
+                            <option value="admin">📁 Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group full">
+                        <label for="taskDesc">Describe your task</label>
+                        <textarea id="taskDesc" placeholder="Be as specific as possible — requirements, audience, tone, format..."></textarea>
+                    </div>
+                    <div class="form-group full">
+                        <label for="taskEmail">Email for result delivery <span class="form-hint">(optional)</span></label>
+                        <input type="email" id="taskEmail" placeholder="you@company.com">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="submitTaskBtn" onclick="submitTask()" style="width: 100%;">⚡ Execute Task</button>
+                <div class="task-result" id="taskResult">
+                    <div class="task-result-header">✅ Task completed <span style="font-weight: 400; color: var(--text-muted); font-size: 0.8rem; margin-left: auto;" id="taskResultTime"></span></div>
+                    <div class="task-result-body" id="taskResultBody"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section id="pricing" style="background: var(--bg-soft);">
+    <div class="container">
+        <div class="section-head">
+            <div class="eyebrow">Pricing</div>
+            <h2>Transparent plans, no surprises</h2>
+            <p>Start free with 5 tasks a month. Upgrade when you need more firepower.</p>
+        </div>
+        <div class="pricing-grid" id="pricingGrid">
+            <div class="price-card">
+                <div class="price-tier">Free</div>
+                <div class="price-amount">$0</div>
+                <div class="price-tasks">5 tasks/month</div>
+                <ul class="price-features">
+                    <li>Chat interview</li>
+                    <li>All 6 skill categories</li>
+                    <li>Instant results</li>
+                    <li>Task history dashboard</li>
+                </ul>
+                <button class="btn btn-ghost" onclick="openAuth('signup')">Get Started Free</button>
+            </div>
+            <!-- Paid tiers populated by JS from /api/profile -->
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+    <div class="container footer-inner">
+        <a href="/" class="logo" style="font-size: 1.05rem;"><span class="logo-badge" style="width: 28px; height: 28px; font-size: 0.9rem;">⚡</span> AgentX</a>
+        <p>Transparent AI-powered professional services. © 2026 AgentX Platform.</p>
+        <div class="footer-links">
+            <a href="#skills">Skills</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/docs" target="_blank">API Docs</a>
+        </div>
+    </div>
+</footer>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeAuth()">×</button>
+        <h3 id="authTitle">Welcome back</h3>
+        <p class="modal-sub" id="authSub">Log in to manage your tasks and plan.</p>
+        <div class="auth-tabs">
+            <button class="auth-tab" id="tabLogin" onclick="switchAuth('login')">Login</button>
+            <button class="auth-tab" id="tabSignup" onclick="switchAuth('signup')">Sign Up</button>
+        </div>
+        <div class="modal-error" id="authError"></div>
+        <form id="authForm" onsubmit="return handleAuth(event)">
+            <div class="form-group" id="nameGroup" style="display: none;">
+                <label for="authName">Full name</label>
+                <input type="text" id="authName" placeholder="Jane Cooper" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="authEmail">Email</label>
+                <input type="email" id="authEmail" placeholder="you@company.com" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="authPassword">Password</label>
+                <input type="password" id="authPassword" placeholder="••••••••" required minlength="6" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary" id="authSubmitBtn" style="width: 100%;">Login</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const API = '';
+let currentUser = null;
+
+const FALLBACK_PROFILE = {
+    name: 'AgentX',
+    tagline: 'Your AI Workforce, On Demand',
+    skills: [
+        { id: 'coding', name: 'Software Development', icon: '💻', description: 'Full-stack development, code review, debugging, API development', capabilities: ['Python', 'JavaScript', 'React', 'APIs', 'Databases', 'Testing'] },
+        { id: 'writing', name: 'Content & Writing', icon: '✍️', description: 'Blog posts, copywriting, technical docs, creative writing', capabilities: ['Blog Posts', 'Copywriting', 'Technical Docs', 'Emails', 'Social Media'] },
+        { id: 'research', name: 'Research & Analysis', icon: '🔍', description: 'Market research, data analysis, competitive intelligence, reports', capabilities: ['Market Research', 'Data Analysis', 'Reports', 'Summaries', 'Fact-checking'] },
+        { id: 'data', name: 'Data Processing', icon: '📊', description: 'Data entry, cleaning, transformation, visualization', capabilities: ['Data Entry', 'Cleaning', 'Transformation', 'Visualization', 'Spreadsheets'] },
+        { id: 'customer', name: 'Customer Support', icon: '🎧', description: 'Email support, chat support, FAQ management, ticket resolution', capabilities: ['Email Support', 'Chat Support', 'FAQ', 'Ticket Management', 'Escalation'] },
+        { id: 'admin', name: 'Administrative', icon: '📁', description: 'Scheduling, email management, document preparation, organization', capabilities: ['Scheduling', 'Email Management', 'Documents', 'Organization', 'Bookkeeping'] }
+    ],
+    pricing: [
+        { tier: 'Starter', price: '$99/mo', tasks: '50 tasks/month', features: ['Chat support', 'Basic skills', 'Email delivery'] },
+        { tier: 'Professional', price: '$299/mo', tasks: '200 tasks/month', features: ['Priority support', 'All skills', 'API access', 'Voice interface'] },
+        { tier: 'Enterprise', price: 'Custom', tasks: 'Unlimited', features: ['Dedicated support', 'Custom skills', 'Full API', 'SLA guarantee'] }
+    ]
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getToken() { return localStorage.getItem('agentx_token'); }
+function setSession(token, user) {
+    localStorage.setItem('agentx_token', token);
+    localStorage.setItem('agentx_user', JSON.stringify(user));
+    currentUser = user;
+    updateNav();
+}
+function clearSession() {
+    localStorage.removeItem('agentx_token');
+    localStorage.removeItem('agentx_user');
+    currentUser = null;
+    updateNav();
+}
+
+function authHeaders() {
+    const token = getToken();
+    return token ? { 'Authorization': 'Bearer ' + token } : {};
+}
+
+function updateNav() {
+    const guest = document.getElementById('navGuest');
+    const userEl = document.getElementById('navUser');
+    if (currentUser) {
+        guest.style.display = 'none';
+        userEl.style.display = 'flex';
+        document.getElementById('navAvatar').textContent = (currentUser.name || 'A').charAt(0).toUpperCase();
+        const quota = document.getElementById('taskQuota');
+        quota.textContent = `You have ${currentUser.tasks_limit - currentUser.tasks_used} of ${currentUser.tasks_limit} free-plan tasks remaining.`;
+    } else {
+        guest.style.display = 'flex';
+        userEl.style.display = 'none';
+        document.getElementById('taskQuota').textContent = 'Sign up to get 5 free tasks.';
+    }
+}
+
+function toast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 4200);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+}
+
+// ============================================================
+// PROFILE RENDERING
+// ============================================================
+async function loadProfile() {
+    let profile = FALLBACK_PROFILE;
+    try {
+        const res = await fetch(API + '/api/profile');
+        if (res.ok) profile = await res.json();
+    } catch (e) { /* use fallback */ }
+
+    // Skills
+    const grid = document.getElementById('skillsGrid');
+    grid.innerHTML = (profile.skills || FALLBACK_PROFILE.skills).map(s => `
+        <div class="skill-card">
+            <div class="skill-icon">${s.icon || '⚙️'}</div>
+            <h3>${escapeHtml(s.name)}</h3>
+            <p>${escapeHtml(s.description)}</p>
+            <div class="capabilities">${(s.capabilities || []).map(c => `<span class="capability">${escapeHtml(c)}</span>`).join('')}</div>
+        </div>
+    `).join('');
+
+    // Pricing (paid tiers)
+    const pricing = document.getElementById('pricingGrid');
+    (profile.pricing || []).forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'price-card' + (p.tier === 'Professional' ? ' popular' : '');
+        card.innerHTML = `
+            ${p.tier === 'Professional' ? '<div class="popular-tag">Most Popular</div>' : ''}
+            <div class="price-tier">${escapeHtml(p.tier)}</div>
+            <div class="price-amount">${escapeHtml(p.price)}</div>
+            <div class="price-tasks">${escapeHtml(p.tasks)}</div>
+            <ul class="price-features">${(p.features || []).map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+            <button class="btn ${p.tier === 'Professional' ? 'btn-primary' : 'btn-ghost'}" onclick="choosePlan('${p.tier.toLowerCase()}')">Choose ${escapeHtml(p.tier)}</button>
+        `;
+        pricing.appendChild(card);
+    });
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+let authMode = 'login';
+
+function openAuth(mode) {
+    switchAuth(mode);
+    document.getElementById('authModal').classList.add('open');
+}
+function closeAuth() { document.getElementById('authModal').classList.remove('open'); }
+
+function switchAuth(mode) {
+    authMode = mode;
+    document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+    document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+    document.getElementById('nameGroup').style.display = mode === 'signup' ? 'flex' : 'none';
+    document.getElementById('authTitle').textContent = mode === 'login' ? 'Welcome back' : 'Create your account';
+    document.getElementById('authSub').textContent = mode === 'login' ? 'Log in to manage your tasks and plan.' : 'Get 5 free tasks every month. No credit card required.';
+    document.getElementById('authSubmitBtn').textContent = mode === 'login' ? 'Login' : 'Create Account';
+    document.getElementById('authError').classList.remove('show');
+}
+
+async function handleAuth(event) {
+    event.preventDefault();
+    const btn = document.getElementById('authSubmitBtn');
+    const errEl = document.getElementById('authError');
+    errEl.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = authMode === 'login' ? 'Logging in...' : 'Creating account...';
+
+    const payload = {
+        email: document.getElementById('authEmail').value.trim(),
+        password: document.getElementById('authPassword').value
+    };
+    if (authMode === 'signup') {
+        payload.name = document.getElementById('authName').value.trim();
+        if (!payload.name) { showAuthError('Please enter your name.'); btn.disabled = false; resetAuthBtn(); return false; }
+    }
+
+    try {
+        const res = await fetch(API + (authMode === 'login' ? '/api/auth/login' : '/api/auth/signup'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Something went wrong');
+
+        setSession(data.access_token, data);
+        closeAuth();
+        toast(authMode === 'login' ? `Welcome back, ${data.name}!` : `Account created! You have ${data.tasks_limit} free tasks. 🎉`);
+    } catch (err) {
+        showAuthError(err.message);
+    } finally {
+        btn.disabled = false;
+        resetAuthBtn();
+    }
+    return false;
+}
+
+function resetAuthBtn() {
+    document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Login' : 'Create Account';
+}
+function showAuthError(msg) {
+    const errEl = document.getElementById('authError');
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+}
+
+async function logout() {
+    clearSession();
+    toast('You have been logged out.', 'info');
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+let sessionId = localStorage.getItem('agentx_session') || null;
+let chatBusy = false;
+
+function appendMessage(text, who) {
+    const box = document.getElementById('chatMessages');
+    const el = document.createElement('div');
+    el.className = 'msg ' + who;
+    el.textContent = text;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    return el;
+}
+
+function sendQuick(btn) { sendMessage(btn.textContent); }
+
+async function sendMessage(presetText) {
+    const input = document.getElementById('chatInput');
+    const text = (presetText || input.value).trim();
+    if (!text || chatBusy) return;
+    chatBusy = true;
+    input.value = '';
+
+    appendMessage(text, 'user');
+    const typing = appendMessage('', 'bot typing');
+    typing.innerHTML = 'AgentX is typing<span class="typing-dots"></span>';
+
+    try {
+        const res = await fetch(API + '/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({ message: text, session_id: sessionId || undefined })
+        });
+        const data = await res.json();
+        typing.remove();
+        if (!res.ok) throw new Error(data.detail || 'Chat failed');
+        sessionId = data.session_id;
+        localStorage.setItem('agentx_session', sessionId);
+        appendMessage(data.response, 'bot');
+    } catch (err) {
+        typing.remove();
+        appendMessage('⚠️ ' + err.message, 'bot');
+    } finally {
+        chatBusy = false;
+        input.focus();
+    }
+}
+
+// ---- Voice input (Web Speech API) ----
+let recognition = null;
+let listening = false;
+
+function setupVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const btn = document.getElementById('voiceBtn');
+    if (!SR) { btn.style.display = 'none'; return; }
+    recognition = new SR();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    const input = document.getElementById('chatInput');
+    recognition.onresult = (e) => {
+        let transcript = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+        input.value = transcript;
+    };
+    recognition.onend = () => { listening = false; btn.classList.remove('listening'); };
+    recognition.onerror = () => { listening = false; btn.classList.remove('listening'); };
+}
+
+function toggleVoice() {
+    if (!recognition) { toast('Voice input is not supported in this browser.', 'error'); return; }
+    if (listening) { recognition.stop(); return; }
+    try {
+        recognition.start();
+        listening = true;
+        document.getElementById('voiceBtn').classList.add('listening');
+    } catch (e) { /* already started */ }
+}
+
+// ============================================================
+// TASK SUBMISSION
+// ============================================================
+async function submitTask() {
+    const title = document.getElementById('taskTitle').value.trim();
+    const description = document.getElementById('taskDesc').value.trim();
+    const skill = document.getElementById('taskSkill').value;
+    const email = document.getElementById('taskEmail').value.trim();
+    const btn = document.getElementById('submitTaskBtn');
+    const resultBox = document.getElementById('taskResult');
+
+    if (!title || !description) { toast('Please provide a title and description for your task.', 'error'); return; }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ AgentX is working...';
+    resultBox.classList.remove('show');
+
+    try {
+        const body = { title, description, skill, client_name: currentUser ? currentUser.name : 'Anonymous' };
+        if (email) body.client_email = email;
+
+        const res = await fetch(API + '/api/submit-task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Task failed');
+
+        document.getElementById('taskResultBody').textContent = data.result || '(no result)';
+        document.getElementById('taskResultTime').textContent = 'Completed in seconds';
+        resultBox.classList.add('show');
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        toast('Task completed! Review the result below.');
+
+        if (currentUser) {
+            currentUser.tasks_used = (currentUser.tasks_used || 0) + 1;
+            localStorage.setItem('agentx_user', JSON.stringify(currentUser));
+            updateNav();
+        }
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDesc').value = '';
+    } catch (err) {
+        toast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '⚡ Execute Task';
+    }
+}
+
+// ============================================================
+// PRICING / CHECKOUT
+// ============================================================
+async function choosePlan(plan) {
+    if (plan === 'free') { openAuth('signup'); return; }
+    if (!currentUser) {
+        toast('Please log in first to upgrade your plan.', 'info');
+        openAuth('login');
+        return;
+    }
+    try {
+        const res = await fetch(API + '/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({
+                plan,
+                success_url: window.location.origin + '/dashboard',
+                cancel_url: window.location.origin + '/#pricing'
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Checkout failed');
+        if (data.url) window.location.href = data.url;
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+    // Restore session
+    const token = getToken();
+    const cached = localStorage.getItem('agentx_user');
+    if (cached) { try { currentUser = JSON.parse(cached); } catch (e) {} }
+    updateNav();
+
+    // Verify token is still valid (refresh user data)
+    if (token) {
+        try {
+            const res = await fetch(API + '/api/auth/me', { headers: authHeaders() });
+            if (res.ok) {
+                currentUser = await res.json();
+                localStorage.setItem('agentx_user', JSON.stringify(currentUser));
+            } else if (res.status === 401) {
+                clearSession();
+            }
+        } catch (e) { /* offline — keep cached */ }
+        updateNav();
+    }
+
+    await loadProfile();
+    setupVoice();
+
+    // Greeting message in chat
+    appendMessage("Hi! I'm AgentX — your AI workforce, on demand. 💼\n\nAsk me about my skills, how I work, pricing, or throw a small task at me right now and I'll show you what I can do.", 'bot');
+
+    // Close modal on overlay click
+    document.getElementById('authModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeAuth();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>

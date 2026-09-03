@@ -16,7 +16,8 @@ from contextlib import contextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from jose import JWTError, jwt
@@ -63,6 +64,14 @@ FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USER)
 
 # App
 app = FastAPI(title="AgentX Platform", version="2.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ============================================================================
 # DATABASE MODELS
@@ -197,12 +206,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     )
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        raw_id = payload.get("sub")
+        if raw_id is None:
             raise credentials_exception
-    except JWTError:
+        user_id = int(raw_id)
+    except (JWTError, ValueError, TypeError):
         raise credentials_exception
-    
+
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
@@ -213,10 +223,10 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(
         return None
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id:
-            return db.query(User).filter(User.id == user_id).first()
-    except:
+        raw_id = payload.get("sub")
+        if raw_id is not None:
+            return db.query(User).filter(User.id == int(raw_id)).first()
+    except Exception:
         pass
     return None
 
@@ -881,9 +891,9 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    
-    # Create token
-    token = create_access_token({"sub": user.id})
+
+    # Create token (JWT "sub" claim must be a string)
+    token = create_access_token({"sub": str(user.id)})
     
     return JSONResponse(content={
         **UserResponse.model_validate(user).model_dump(mode="json"),
@@ -896,8 +906,8 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user or not verify_password(user_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    token = create_access_token({"sub": user.id})
+
+    token = create_access_token({"sub": str(user.id)})
     
     return JSONResponse(content={
         **UserResponse.model_validate(user).model_dump(mode="json"),
@@ -913,23 +923,48 @@ async def get_me(current_user: User = Depends(get_current_user)):
 # CHAT ROUTES
 # ============================================================================
 
+@app.get("/health")
+async def health():
+    return {"status": "ok", "version": "2.0", "time": datetime.utcnow().isoformat()}
+
+
 @app.get("/api/profile")
 async def get_profile():
     return JSONResponse(content=AGENT_PROFILE)
+
+
+@app.get("/api/skills")
+async def get_skills():
+    return JSONResponse(content={"skills": AGENT_PROFILE["skills"]})
+
 
 @app.post("/api/chat")
 async def chat(request: Request, db: Session = Depends(get_db)):
     body = await request.json()
     message = body.get("message", "")
     session_id = body.get("session_id", str(uuid.uuid4()))
-    
+    if not message.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
     response = get_agent_response(message, session_id, db)
-    
+
     return JSONResponse(content={
         "response": response,
         "session_id": session_id,
         "timestamp": datetime.utcnow().isoformat()
     })
+
+
+@app.get("/api/chat/history/{session_id}")
+async def chat_history(session_id: str, db: Session = Depends(get_db)):
+    session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
+    if not session:
+        return JSONResponse(content={"session_id": session_id, "messages": []})
+    try:
+        messages = json.loads(session.messages or "[]")
+    except Exception:
+        messages = []
+    return JSONResponse(content={"session_id": session_id, "messages": messages})
 
 # ============================================================================
 # TASK ROUTES
@@ -1072,13 +1107,19 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    with open("static/index.html", "r") as f:
-        return f.read()
+    path = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if not os.path.exists(path):
+        return HTMLResponse("<h1>AgentX is running</h1><p>Frontend not built yet.</p>")
+    with open(path, "r") as f:
+        return HTMLResponse(f.read())
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard():
-    with open("static/dashboard.html", "r") as f:
-        return f.read()
+    path = os.path.join(os.path.dirname(__file__), "static", "dashboard.html")
+    if not os.path.exists(path):
+        return HTMLResponse("<h1>Dashboard not found</h1><p><a href='/'>Back home</a></p>", status_code=404)
+    with open(path, "r") as f:
+        return HTMLResponse(f.read())
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -1089,11 +1130,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.getenv("PORT", "8000"))
     print("=" * 60)
     print("⚡ AgentX Platform Starting...")
     print(f"  OpenAI: {'✅ Configured' if OPENAI_API_KEY else '❌ Not set (using fallback)'}")
     print(f"  Stripe: {'✅ Configured' if STRIPE_SECRET_KEY else '❌ Not set'}")
     print(f"  Email:  {'✅ Configured' if SMTP_USER else '❌ Not set'}")
     print(f"  Database: {DATABASE_URL}")
+    print(f"  Port: {port}")
     print("=" * 60)
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — AgentX</title>
+<style>
+:root{--primary:#6366f1;--accent:#06b6d4;--bg:#0f172a;--bg2:#1e293b;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--green:#22c55e;--radius:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:1060px;margin:0 auto;padding:0 20px}
+nav{background:rgba(15,23,42,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:1060px;margin:0 auto}
+.logo{font-size:1.3rem;font-weight:800;text-decoration:none}.logo span{color:var(--accent)}
+.btn{border:none;cursor:pointer;font-weight:600;border-radius:10px;padding:10px 20px;font-size:.92rem;text-decoration:none;transition:.15s;display:inline-block}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-sm{padding:7px 14px;font-size:.85rem}
+header.page{padding:36px 0 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:22px 0}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.card small{color:var(--muted)}.card b{font-size:1.5rem;display:block;margin:4px 0}
+.bar{height:10px;background:#0f172a;border-radius:6px;overflow:hidden;margin-top:10px;border:1px solid var(--border)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:6px}
+.grid{display:grid;grid-template-columns:1fr 1.4fr;gap:18px;margin:18px 0 40px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.panel h3{margin-bottom:12px}
+label{display:block;font-size:.83rem;color:var(--muted);margin:10px 0 5px}
+input,select,textarea{width:100%;background:#0f172a;border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-size:.93rem;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+textarea{min-height:96px;resize:vertical}
+.task{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#0f172a}
+.task .meta{font-size:.78rem;color:var(--muted);margin-bottom:6px}
+.task .title{font-weight:700}
+.badge{font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+.badge.completed{color:var(--green);border-color:var(--green)}
+.task pre{white-space:pre-wrap;font-family:inherit;font-size:.87rem;background:#1e293b;border-radius:8px;padding:12px;margin-top:10px;max-height:260px;overflow-y:auto}
+.task pre.collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.toggle{font-size:.8rem;color:var(--accent);cursor:pointer;background:none;border:none;padding:4px 0}
+#loginGate{text-align:center;padding:80px 20px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--primary);padding:12px 22px;border-radius:12px;z-index:200;transition:.25s;opacity:0}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.plans{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+</style>
+</head>
+<body>
+<nav><div class="nav-inner">
+  <a class="logo" href="/">🤖 Agent<span>X</span></a>
+  <div><a href="/" class="btn btn-ghost btn-sm">← Home</a> <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button></div>
+</div></nav>
+
+<div id="loginGate" style="display:none">
+  <div class="container">
+    <h2>🔒 Login required</h2>
+    <p style="color:var(--muted);margin:10px 0 20px">Your dashboard tracks tasks, usage and billing. Please log in first.</p>
+    <a href="/" class="btn btn-primary">Go to Home &amp; Login</a>
+  </div>
+</div>
+
+<div id="dash" style="display:none">
+<div class="container">
+  <header class="page">
+    <h2 id="welcome">Dashboard</h2>
+    <p style="color:var(--muted)" id="subline">…</p>
+  </header>
+
+  <div class="cards">
+    <div class="card"><small>Plan</small><b id="planName">–</b><span class="badge" id="planBadge">free</span></div>
+    <div class="card"><small>Task usage</small><b id="usage">–</b><div class="bar"><i id="usageBar" style="width:0%"></i></div></div>
+    <div class="card"><small>Total tasks</small><b id="totalTasks">–</b><span style="font-size:.8rem;color:var(--muted)">auto-refreshes every 30s</span></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>⚡ New task</h3>
+      <label>Title</label><input id="tTitle" placeholder="e.g. Draft refund reply">
+      <label>Skill</label><select id="tSkill">
+        <option value="coding">💻 Coding</option><option value="writing" selected>✍️ Writing</option>
+        <option value="research">🔍 Research</option><option value="data">📊 Data</option>
+        <option value="customer">🎧 Support</option><option value="admin">📁 Admin</option>
+      </select>
+      <label>Description</label><textarea id="tDesc" placeholder="Describe the work…"></textarea>
+      <button class="btn btn-primary" style="width:100%;margin-top:14px" id="tBtn" onclick="newTask()">Execute Task</button>
+      <h3 style="margin-top:22px">💳 Upgrade plan</h3>
+      <p style="font-size:.85rem;color:var(--muted)">Raise your monthly task limit with Stripe checkout.</p>
+      <div class="plans">
+        <button class="btn btn-ghost btn-sm" onclick="upgrade('starter')">Starter $99 · 50</button>
+        <button class="btn btn-ghost btn-sm" onclick="upgrade('professional')">Pro $299 · 200</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>📜 Task history</h3>
+      <div id="taskList"><p style="color:var(--muted)">Loading…</p></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function token(){return localStorage.getItem('agentx_token');}
+function H(){return {...(token()?{'Authorization':'Bearer '+token()}:{}),'Content-Type':'application/json'};}
+function logout(){localStorage.removeItem('agentx_token');localStorage.removeItem('agentx_user');location.href='/';}
+
+async function init(){
+  if(!token()){ $('loginGate').style.display='block'; return; }
+  $('dash').style.display='block';
+  await refreshMe(); await refreshTasks();
+  setInterval(refreshTasks, 30000);
+  const q=new URLSearchParams(location.search).get('session_id');
+  if(q){ toast('🎉 Payment received! Refreshing plan…'); setTimeout(refreshMe,2500); }
+}
+async function refreshMe(){
+  try{
+    const r=await fetch('/api/auth/me',{headers:H()});
+    if(r.status===401){ $('loginGate').style.display='block'; $('dash').style.display='none'; return; }
+    const u=await r.json();
+    localStorage.setItem('agentx_user',JSON.stringify({...u,access_token:token()}));
+    $('welcome').textContent=`👋 ${u.name}'s Dashboard`;
+    $('subline').textContent=`${u.email} · member since ${new Date(u.created_at).toLocaleDateString()}`;
+    $('planName').textContent=u.plan[0].toUpperCase()+u.plan.slice(1);
+    $('planBadge').textContent=u.plan;
+    $('usage').textContent=`${u.tasks_used} / ${u.tasks_limit}`;
+    $('usageBar').style.width=Math.min(100,(u.tasks_used/Math.max(1,u.tasks_limit))*100)+'%';
+  }catch(e){ toast('Could not load profile.'); }
+}
+async function refreshTasks(){
+  try{
+    const r=await fetch('/api/tasks',{headers:H()}); const list=await r.json();
+    $('totalTasks').textContent=list.length;
+    if(!list.length){ $('taskList').innerHTML='<p style="color:var(--muted)">No tasks yet — submit your first one! 🚀</p>'; return; }
+    $('taskList').innerHTML=list.map(t=>`
+      <div class="task"><div class="meta">${new Date(t.created_at).toLocaleString()} · ${t.skill} · <span class="badge ${t.status}">${t.status}</span></div>
+      <div class="title">${escapeHtml(t.title)}</div>
+      <pre class="collapsed" onclick="this.classList.toggle('collapsed')" title="Click to expand">${escapeHtml(t.result||t.description||'')}</pre>
+      </div>`).join('');
+  }catch(e){ $('taskList').innerHTML='<p style="color:var(--muted)">Failed to load tasks.</p>'; }
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function newTask(){
+  const title=$('tTitle').value.trim(),description=$('tDesc').value.trim(),skill=$('tSkill').value;
+  if(!title||!description){toast('Add a title and description.');return;}
+  $('tBtn').disabled=true;$('tBtn').textContent='⏳ Working…';
+  try{
+    const r=await fetch('/api/submit-task',{method:'POST',headers:H(),body:JSON.stringify({title,description,skill})});
+    const d=await r.json();
+    if(!r.ok){toast(d.detail||'Task failed.');return;}
+    $('tTitle').value='';$('tDesc').value='';
+    toast('✅ Task completed!'); await refreshMe(); await refreshTasks();
+  }catch(e){toast('Network error.');}
+  finally{$('tBtn').disabled=false;$('tBtn').textContent='Execute Task';}
+}
+async function upgrade(plan){
+  try{
+    const r=await fetch('/api/create-checkout-session',{method:'POST',headers:H(),body:JSON.stringify({plan,success_url:location.href,cancel_url:location.href})});
+    const d=await r.json();
+    if(d.url) location.href=d.url; else toast(d.detail||'Stripe not configured.');
+  }catch(e){toast('Checkout unavailable.');}
+}
+init();
+</script>
+</body>
+</html>

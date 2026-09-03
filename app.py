@@ -27,6 +27,12 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 import openai
 import stripe
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================

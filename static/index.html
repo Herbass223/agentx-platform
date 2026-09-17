@@ -879,7 +879,9 @@ async function init() {
                 currentUser = await res.json();
                 localStorage.setItem('agentx_user', JSON.stringify(currentUser));
             } else if (res.status === 401) {
+                const wasLoggedIn = !!currentUser;
                 clearSession();
+                if (wasLoggedIn) toast('Your session expired — please log in again.', 'info');
             }
         } catch (e) { /* offline — keep cached */ }
         updateNav();
